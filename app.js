@@ -20,13 +20,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialiser l'application
     initTheme();
     initModeSelector();
-    toggleChargesMode('mensuelles'); // Initialiser le toggle charges
     populateQuartierFilter();
     updateLabelsAndForm();
     renderTable();
     renderStats();
     renderCharts();
     initEventListeners();
+
+    // Initialiser le toggle charges APRÈS que tout est chargé
+    setTimeout(() => {
+        const btnMensuelles = document.getElementById('chargesMensuelles');
+        const btnAnnuelles = document.getElementById('chargesAnnuelles');
+        if (btnMensuelles && btnAnnuelles) {
+            toggleChargesMode('mensuelles');
+        }
+    }, 100);
 });
 
 // ===== THÈME =====
@@ -101,21 +109,27 @@ function updateLabelsAndForm() {
     const isLocation = currentMode === 'location';
 
     // Labels dans les filtres
-    document.querySelector('label[for="prixMin"]').textContent = isLocation ? 'Loyer (€)' : 'Prix (€)';
-    document.querySelector('label[for="prixMax"]').textContent = isLocation ? 'Loyer (€)' : 'Prix (€)';
+    const labelPrixMin = document.querySelector('label[for="prixMin"]');
+    const labelPrixMax = document.querySelector('label[for="prixMax"]');
+    if (labelPrixMin) labelPrixMin.textContent = isLocation ? 'Loyer (€)' : 'Prix (€)';
+    if (labelPrixMax) labelPrixMax.textContent = isLocation ? 'Loyer (€)' : 'Prix (€)';
 
     // Labels dans le tableau
-    document.getElementById('thPrix').textContent = isLocation ? 'Loyer' : 'Prix';
+    const thPrix = document.getElementById('thPrix');
+    if (thPrix) thPrix.textContent = isLocation ? 'Loyer' : 'Prix';
 
     // Labels dans le formulaire
-    document.getElementById('labelPrix').textContent = isLocation ? 'Loyer mensuel (€) *' : 'Prix (€) *';
-    
+    const labelPrix = document.getElementById('labelPrix');
+    if (labelPrix) labelPrix.textContent = isLocation ? 'Loyer mensuel (€) *' : 'Prix (€) *';
+
     // Label des charges selon le mode (mensuelles ou annuelles)
     const labelCharges = document.getElementById('labelCharges');
-    if (displayChargesMode === 'mensuelles') {
-        labelCharges.textContent = 'Charges mensuelles (€)';
-    } else {
-        labelCharges.textContent = 'Charges annuelles (€)';
+    if (labelCharges) {
+        if (displayChargesMode === 'mensuelles') {
+            labelCharges.textContent = 'Charges mensuelles (€)';
+        } else {
+            labelCharges.textContent = 'Charges annuelles (€)';
+        }
     }
 
     // Afficher/masquer le champ dépôt de garantie
@@ -163,11 +177,13 @@ function initEventListeners() {
     
     // Export CSV
     document.getElementById('exportBtn').addEventListener('click', exportCSV);
-    
+
     // Toggle charges mensuelles/annuelles
-    document.getElementById('chargesMensuelles').addEventListener('click', () => toggleChargesMode('mensuelles'));
-    document.getElementById('chargesAnnuelles').addEventListener('click', () => toggleChargesMode('annuelles'));
-    
+    const btnMensuelles = document.getElementById('chargesMensuelles');
+    const btnAnnuelles = document.getElementById('chargesAnnuelles');
+    if (btnMensuelles) btnMensuelles.addEventListener('click', () => toggleChargesMode('mensuelles'));
+    if (btnAnnuelles) btnAnnuelles.addEventListener('click', () => toggleChargesMode('annuelles'));
+
     // Fermer modal en cliquant à l'extérieur
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
@@ -179,20 +195,20 @@ function initEventListeners() {
 // ===== TOGGLE CHARGES =====
 function toggleChargesMode(mode) {
     displayChargesMode = mode;
-    
+
     // Mettre à jour l'UI du toggle
     const btnMensuelles = document.getElementById('chargesMensuelles');
     const btnAnnuelles = document.getElementById('chargesAnnuelles');
     const thCharges = document.getElementById('thCharges');
-    
+
     if (mode === 'mensuelles') {
-        btnMensuelles.classList.add('active');
-        btnAnnuelles.classList.remove('active');
-        thCharges.textContent = currentMode === 'location' ? 'Charges/mois' : 'Charges/mois';
+        if (btnMensuelles) btnMensuelles.classList.add('active');
+        if (btnAnnuelles) btnAnnuelles.classList.remove('active');
+        if (thCharges) thCharges.textContent = 'Charges/mois';
     } else {
-        btnAnnuelles.classList.add('active');
-        btnMensuelles.classList.remove('active');
-        thCharges.textContent = 'Charges/an';
+        if (btnAnnuelles) btnAnnuelles.classList.add('active');
+        if (btnMensuelles) btnMensuelles.classList.remove('active');
+        if (thCharges) thCharges.textContent = 'Charges/an';
     }
     
     // Mettre à jour le label dans le formulaire
