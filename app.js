@@ -187,19 +187,35 @@ function updateEtatFilters() {
     const etatFilterContainer = document.getElementById('etatFilter');
     
     if (currentMode === 'location') {
-        // Mode location: nouveaux états
+        // Mode location: nouveaux états avec indicateurs CSS au lieu d'emojis
         const locationStates = [
-            { value: 'Nouveau', label: '🔵 Nouveau' },
-            { value: 'Contacté', label: '🟡 Contacté' },
-            { value: 'En attente de rappel', label: '🟠 En attente' },
-            { value: 'Rendez-vous visite', label: '🟣 Visite' },
-            { value: 'Il faut appeler', label: '🩺 À appeler' },
-            { value: 'Refusé', label: '🔴 Refusé' }
+            { value: 'Nouveau', label: 'Nouveau', class: 'status-nouveau' },
+            { value: 'Contacté', label: 'Contacté', class: 'status-contacte' },
+            { value: 'En attente de rappel', label: 'En attente', class: 'status-attente' },
+            { value: 'Rendez-vous visite', label: 'Visite', class: 'status-visite' },
+            { value: 'Il faut appeler', label: 'À appeler', class: 'status-appeler' },
+            { value: 'Refusé', label: 'Refusé', class: 'status-refuse' }
         ];
         
-        etatFilterContainer.innerHTML = locationStates.map(state => 
-            `<label><input type="checkbox" value="${state.value}"> ${state.label}</label>`
-        ).join('');
+        // Utiliser DOM API pour éviter innerHTML avec interpolation
+        etatFilterContainer.innerHTML = '';
+        locationStates.forEach(state => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = state.value;
+            checkbox.addEventListener('change', applyFilters);
+            
+            const indicator = document.createElement('span');
+            indicator.className = state.class;
+            indicator.textContent = '● ';
+            indicator.style.fontSize = '0.8rem';
+            
+            label.appendChild(checkbox);
+            label.appendChild(indicator);
+            label.appendChild(document.createTextNode(state.label));
+            etatFilterContainer.appendChild(label);
+        });
     } else {
         // Mode achat: anciens états
         const achatStates = [
@@ -209,15 +225,19 @@ function updateEtatFilters() {
             { value: 'Refusé', label: 'Refusé' }
         ];
         
-        etatFilterContainer.innerHTML = achatStates.map(state => 
-            `<label><input type="checkbox" value="${state.value}"> ${state.label}</label>`
-        ).join('');
+        etatFilterContainer.innerHTML = '';
+        achatStates.forEach(state => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = state.value;
+            checkbox.addEventListener('change', applyFilters);
+            
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(' ' + state.label));
+            etatFilterContainer.appendChild(label);
+        });
     }
-    
-    // Réattacher les événements aux nouvelles checkboxes
-    document.querySelectorAll('#etatFilter input').forEach(cb => {
-        cb.addEventListener('change', applyFilters);
-    });
 }
 
 // ===== EVENEMENTS =====
@@ -594,21 +614,15 @@ function renderStats() {
         };
         
         document.getElementById('totalBiens').textContent = stats.total;
-        document.getElementById('statVoir').innerHTML = '<span class="badge badge-status-nouveau">Nouveau</span>: ' + stats.nouveau;
-        document.getElementById('statVu').innerHTML = '<span class="badge badge-status-contacte">Contacté</span>: ' + stats.contacte;
-        document.getElementById('statRetenu').innerHTML = '<span class="badge badge-status-attente">En attente</span>: ' + stats.attente;
-        document.getElementById('statRefuse').innerHTML = '<span class="badge badge-status-visite">Visite</span>: ' + stats.visite;
+        
+        // Utiliser DOM API au lieu de innerHTML pour la sécurité
+        updateStatElement('statVoir', 'badge-status-nouveau', 'Nouveau', stats.nouveau);
+        updateStatElement('statVu', 'badge-status-contacte', 'Contacté', stats.contacte);
+        updateStatElement('statRetenu', 'badge-status-attente', 'En attente', stats.attente);
+        updateStatElement('statRefuse', 'badge-status-visite', 'Visite', stats.visite);
         
         // Mettre à jour les labels des cartes stats
-        const voirLabel = document.querySelector('.stat-card:nth-child(2) .stat-label');
-        const vuLabel = document.querySelector('.stat-card:nth-child(3) .stat-label');
-        const retenuLabel = document.querySelector('.stat-card:nth-child(4) .stat-label');
-        const refuseLabel = document.querySelector('.stat-card:nth-child(5) .stat-label');
-        
-        if (voirLabel) voirLabel.textContent = 'Nouveaux';
-        if (vuLabel) vuLabel.textContent = 'Contactés';
-        if (retenuLabel) retenuLabel.textContent = 'En attente';
-        if (refuseLabel) refuseLabel.textContent = 'Visites';
+        updateStatLabels('Nouveaux', 'Contactés', 'En attente', 'Visites');
     } else {
         // Stats pour le mode achat (anciens états)
         const stats = {
@@ -626,16 +640,36 @@ function renderStats() {
         document.getElementById('statRefuse').textContent = stats.refuse;
         
         // Restaurer les labels des cartes stats
-        const voirLabel = document.querySelector('.stat-card:nth-child(2) .stat-label');
-        const vuLabel = document.querySelector('.stat-card:nth-child(3) .stat-label');
-        const retenuLabel = document.querySelector('.stat-card:nth-child(4) .stat-label');
-        const refuseLabel = document.querySelector('.stat-card:nth-child(5) .stat-label');
-        
-        if (voirLabel) voirLabel.textContent = 'À Voir';
-        if (vuLabel) vuLabel.textContent = 'Vus';
-        if (retenuLabel) retenuLabel.textContent = 'Retenus';
-        if (refuseLabel) refuseLabel.textContent = 'Refusés';
+        updateStatLabels('À Voir', 'Vus', 'Retenus', 'Refusés');
     }
+}
+
+// Helper pour mettre à jour un élément de stat avec badge (DOM API sécurisé)
+function updateStatElement(elementId, badgeClass, badgeText, value) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    element.textContent = ''; // Clear
+    
+    const badge = document.createElement('span');
+    badge.className = `badge ${badgeClass}`;
+    badge.textContent = badgeText;
+    
+    element.appendChild(badge);
+    element.appendChild(document.createTextNode(`: ${value}`));
+}
+
+// Helper pour mettre à jour les labels des cartes stats
+function updateStatLabels(label1, label2, label3, label4) {
+    const voirLabel = document.querySelector('.stat-card:nth-child(2) .stat-label');
+    const vuLabel = document.querySelector('.stat-card:nth-child(3) .stat-label');
+    const retenuLabel = document.querySelector('.stat-card:nth-child(4) .stat-label');
+    const refuseLabel = document.querySelector('.stat-card:nth-child(5) .stat-label');
+    
+    if (voirLabel) voirLabel.textContent = label1;
+    if (vuLabel) vuLabel.textContent = label2;
+    if (retenuLabel) retenuLabel.textContent = label3;
+    if (refuseLabel) refuseLabel.textContent = label4;
 }
 
 // ===== GRAPHIQUES (Canvas simple) =====

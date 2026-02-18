@@ -171,15 +171,15 @@
                 <table class="data-table" id="biensTable">
                     <thead>
                         <tr>
-                            <th data-sort="quartier" class="sortable">Quartier<span class="sort-icon"></span></th>
-                            <th data-sort="type" class="sortable">Type<span class="sort-icon"></span></th>
-                            <th id="thPrix" data-sort="loyer" class="sortable">Prix<span class="sort-icon"></span></th>
-                            <th data-sort="surface" class="sortable">Surface<span class="sort-icon"></span></th>
+                            <th data-sort="quartier" class="sortable" aria-label="Trier par quartier">Quartier<span class="sort-icon"></span></th>
+                            <th data-sort="type" class="sortable" aria-label="Trier par type">Type<span class="sort-icon"></span></th>
+                            <th id="thPrix" data-sort="loyer" class="sortable" aria-label="Trier par prix">Prix<span class="sort-icon"></span></th>
+                            <th data-sort="surface" class="sortable" aria-label="Trier par surface">Surface<span class="sort-icon"></span></th>
                             <th>Meublé</th>
                             <th>Nb Pièces</th>
-                            <th id="thPrixM2" data-sort="prixM2" class="sortable">Prix/m²<span class="sort-icon"></span></th>
-                            <th id="thCharges" data-sort="charges" class="sortable">Charges<span class="sort-icon"></span></th>
-                            <th data-sort="dpe" class="sortable">DPE<span class="sort-icon"></span></th>
+                            <th id="thPrixM2" data-sort="prixM2" class="sortable" aria-label="Trier par prix au m²">Prix/m²<span class="sort-icon"></span></th>
+                            <th id="thCharges" data-sort="charges" class="sortable" aria-label="Trier par charges">Charges<span class="sort-icon"></span></th>
+                            <th data-sort="dpe" class="sortable" aria-label="Trier par DPE">DPE<span class="sort-icon"></span></th>
                             <th>État</th>
                             <th>Équipements</th>
                             <th>Actions</th>
@@ -288,12 +288,12 @@
                             <label for="etat">État *</label>
                             <select id="etat" required class="form-select">
                                 <optgroup label="Location" id="etatLocationGroup">
-                                    <option value="Nouveau">🔵 Nouveau</option>
-                                    <option value="Contacté">🟡 Contacté</option>
-                                    <option value="En attente de rappel">🟠 En attente de rappel</option>
-                                    <option value="Rendez-vous visite">🟣 Rendez-vous visite</option>
-                                    <option value="Il faut appeler">🩺 Il faut appeler</option>
-                                    <option value="Refusé">🔴 Refusé</option>
+                                    <option value="Nouveau" class="status-nouveau">● Nouveau</option>
+                                    <option value="Contacté" class="status-contacte">● Contacté</option>
+                                    <option value="En attente de rappel" class="status-attente">● En attente de rappel</option>
+                                    <option value="Rendez-vous visite" class="status-visite">● Rendez-vous visite</option>
+                                    <option value="Il faut appeler" class="status-appeler">● Il faut appeler</option>
+                                    <option value="Refusé" class="status-refuse">● Refusé</option>
                                 </optgroup>
                                 <optgroup label="Achat" id="etatAchatGroup">
                                     <option value="À voir">À voir</option>

@@ -482,35 +482,59 @@ body {
 }
 
 /* Status Badges - Location (nouveaux états) */
-.badge-status-nouveau {
+.badge-status-nouveau,
+.status-nouveau {
     background: #dbeafe;
     color: #1d4ed8;
 }
 
-.badge-status-contacte {
+.badge-status-contacte,
+.status-contacte {
     background: #fef3c7;
     color: #b45309;
 }
 
-.badge-status-attente {
+.badge-status-attente,
+.status-attente {
     background: #ffedd5;
     color: #c2410c;
 }
 
-.badge-status-visite {
+.badge-status-visite,
+.status-visite {
     background: #ede9fe;
     color: #7c3aed;
 }
 
-.badge-status-appeler {
+.badge-status-appeler,
+.status-appeler {
     background: #fce7f3;
     color: #db2777;
 }
 
-.badge-status-refuse {
+.badge-status-refuse,
+.status-refuse {
     background: #fee2e2;
     color: #b91c1c;
 }
+
+/* Indicateur de statut pour les options de select */
+.status-nouveau,
+.status-contacte,
+.status-attente,
+.status-visite,
+.status-appeler,
+.status-refuse {
+    font-weight: 600;
+}
+
+/* Dark mode pour les options */
+body.dark-mode .status-nouveau { background: #1e3a5f; color: #60a5fa; }
+body.dark-mode .status-contacte { background: #78350f; color: #fbbf24; }
+body.dark-mode .status-attente { background: #7c2d12; color: #fb923c; }
+body.dark-mode .status-visite { background: #4c1d95; color: #a78bfa; }
+body.dark-mode .status-appeler { background: #831843; color: #f472b6; }
+body.dark-mode .status-refuse { background: #7f1d1d; color: #f87171; }
 
 /* Status Badges - Achat (anciens états) */
 .badge-status-voir {
