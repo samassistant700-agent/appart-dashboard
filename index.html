@@ -15,6 +15,15 @@
                 <span class="subtitle">Gestion de recherche de bien immobilier</span>
             </div>
             <div class="header-right">
+                <!-- Mode Selector -->
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="achat" id="modeAchat">
+                        🏢 Achat
+                    </button>
+                    <button class="mode-btn" data-mode="location" id="modeLocation">
+                        🔑 Location
+                    </button>
+                </div>
                 <button id="themeToggle" class="btn-icon" title="Changer le thème">
                     <span class="icon-theme">🌙</span>
                 </button>
@@ -153,10 +162,10 @@
                         <tr>
                             <th>Quartier</th>
                             <th>Type</th>
-                            <th>Prix</th>
+                            <th id="thPrix">Prix</th>
                             <th>Surface</th>
                             <th>Pièces</th>
-                            <th>Prix/m²</th>
+                            <th id="thPrixM2">Prix/m²</th>
                             <th>DPE</th>
                             <th>État</th>
                             <th>Équipements</th>
@@ -205,8 +214,12 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="prix">Prix (€) *</label>
+                            <label for="prix" id="labelPrix">Prix (€) *</label>
                             <input type="number" id="prix" required class="form-input">
+                        </div>
+                        <div class="form-group" id="depotGarantieGroup" style="display: none;">
+                            <label for="depotGarantie">Dépôt de Garantie (€)</label>
+                            <input type="number" id="depotGarantie" class="form-input" placeholder="Calculé automatiquement (2x loyer)">
                         </div>
                         <div class="form-group">
                             <label for="surface">Surface (m²) *</label>
@@ -248,7 +261,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="charges">Charges Annuelles (€)</label>
+                            <label for="charges" id="labelCharges">Charges Annuelles (€)</label>
                             <input type="number" id="charges" class="form-input">
                         </div>
                         <div class="form-group">

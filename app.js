@@ -2,16 +2,25 @@
 let biens = [];
 let filteredBiens = [];
 let editingId = null;
+let currentMode = 'achat'; // 'achat' ou 'location'
 
 // ===== INITIALISATION =====
 document.addEventListener('DOMContentLoaded', () => {
-    // Charger les données
-    biens = loadData();
+    // Charger le mode sauvegardé ou défaut 'achat'
+    currentMode = localStorage.getItem('currentMode') || 'achat';
+    
+    // Mettre à jour l'UI du sélecteur de mode
+    updateModeUI();
+    
+    // Charger les données selon le mode
+    biens = loadData(currentMode);
     filteredBiens = [...biens];
     
     // Initialiser l'application
     initTheme();
+    initModeSelector();
     populateQuartierFilter();
+    updateLabelsAndForm();
     renderTable();
     renderStats();
     renderCharts();
@@ -35,6 +44,80 @@ function initTheme() {
         themeToggle.querySelector('.icon-theme').textContent = isDark ? '☀️' : '🌙';
         renderCharts(); // Redessiner les graphiques avec les nouvelles couleurs
     });
+}
+
+// ===== SÉLECTEUR DE MODE =====
+function initModeSelector() {
+    const modeAchat = document.getElementById('modeAchat');
+    const modeLocation = document.getElementById('modeLocation');
+    
+    modeAchat.addEventListener('click', () => switchMode('achat'));
+    modeLocation.addEventListener('click', () => switchMode('location'));
+}
+
+function switchMode(newMode) {
+    if (newMode === currentMode) return;
+    
+    // Sauvegarder les données actuelles avant de changer
+    saveData(biens, currentMode);
+    
+    // Changer de mode
+    currentMode = newMode;
+    localStorage.setItem('currentMode', currentMode);
+    
+    // Mettre à jour l'UI
+    updateModeUI();
+    
+    // Charger les nouvelles données
+    biens = loadData(currentMode);
+    filteredBiens = [...biens];
+    
+    // Rafraîchir l'interface
+    populateQuartierFilter();
+    updateLabelsAndForm();
+    renderTable();
+    renderStats();
+    renderCharts();
+    clearFilters();
+}
+
+function updateModeUI() {
+    const modeAchat = document.getElementById('modeAchat');
+    const modeLocation = document.getElementById('modeLocation');
+    
+    if (currentMode === 'achat') {
+        modeAchat.classList.add('active');
+        modeLocation.classList.remove('active');
+    } else {
+        modeLocation.classList.add('active');
+        modeAchat.classList.remove('active');
+    }
+}
+
+function updateLabelsAndForm() {
+    // Mettre à jour les labels selon le mode
+    const isLocation = currentMode === 'location';
+
+    // Labels dans les filtres
+    document.querySelector('label[for="prixMin"]').textContent = isLocation ? 'Loyer (€)' : 'Prix (€)';
+    document.querySelector('label[for="prixMax"]').textContent = isLocation ? 'Loyer (€)' : 'Prix (€)';
+
+    // Labels dans le tableau
+    document.getElementById('thPrix').textContent = isLocation ? 'Loyer' : 'Prix';
+
+    // Labels dans le formulaire
+    document.getElementById('labelPrix').textContent = isLocation ? 'Loyer mensuel (€) *' : 'Prix (€) *';
+    document.getElementById('labelCharges').textContent = isLocation ? 'Charges mensuelles (€)' : 'Charges Annuelles (€)';
+
+    // Afficher/masquer le champ dépôt de garantie
+    const depotGroup = document.getElementById('depotGarantieGroup');
+    if (depotGroup) {
+        depotGroup.style.display = isLocation ? 'block' : 'none';
+    }
+
+    // Mettre à jour les placeholders des filtres
+    document.getElementById('prixMin').placeholder = isLocation ? 'Loyer min' : 'Prix min';
+    document.getElementById('prixMax').placeholder = isLocation ? 'Loyer max' : 'Prix max';
 }
 
 // ===== EVENEMENTS =====
@@ -152,26 +235,32 @@ function clearFilters() {
 function renderTable() {
     const tbody = document.getElementById('biensTableBody');
     const noResults = document.getElementById('noResults');
-    
+
     if (filteredBiens.length === 0) {
         tbody.innerHTML = '';
         noResults.style.display = 'block';
         return;
     }
-    
+
     noResults.style.display = 'none';
-    
+
+    const isLocation = currentMode === 'location';
+
     tbody.innerHTML = filteredBiens.map(bien => {
-        const prixM2 = Math.round(bien.prix / bien.surface);
+        // Utiliser 'loyer' ou 'prix' selon le mode
+        const prix = isLocation ? (bien.loyer || 0) : (bien.prix || 0);
+        const prixLabel = isLocation ? formatPrice(bien.loyer || 0) : formatPrice(bien.prix || 0);
+        const prixM2 = Math.round(prix / bien.surface);
+
         const statusClass = getStatusClass(bien.etat);
         const dpeClass = `badge-dpe-${bien.dpe.toLowerCase()}`;
         const equipmentIcons = getEquipmentIcons(bien);
-        
+
         return `
             <tr>
                 <td><strong>${escapeHtml(bien.quartier)}</strong></td>
                 <td>${escapeHtml(bien.type)}</td>
-                <td><strong>${formatPrice(bien.prix)}</strong></td>
+                <td><strong>${prixLabel}</strong></td>
                 <td>${bien.surface} m²</td>
                 <td>${bien.pieces}</td>
                 <td><strong>${prixM2} €/m²</strong></td>
@@ -389,17 +478,23 @@ function openModal(bien = null) {
     const modal = document.getElementById('bienModal');
     const form = document.getElementById('bienForm');
     const title = document.getElementById('modalTitle');
-    
+
     form.reset();
-    
+
+    // Mettre à jour les labels selon le mode actuel
+    updateLabelsAndForm();
+
     if (bien) {
         editingId = bien.id;
         title.textContent = '✏️ Modifier le Bien';
-        
+
+        // Déterminer la valeur du prix/loyer
+        const prixValue = currentMode === 'location' ? (bien.loyer || bien.prix || 0) : (bien.prix || 0);
+
         // Remplir le formulaire
         document.getElementById('quartier').value = bien.quartier;
         document.getElementById('type').value = bien.type;
-        document.getElementById('prix').value = bien.prix;
+        document.getElementById('prix').value = prixValue;
         document.getElementById('surface').value = bien.surface;
         document.getElementById('pieces').value = bien.pieces;
         document.getElementById('dpe').value = bien.dpe;
@@ -420,11 +515,16 @@ function openModal(bien = null) {
         document.getElementById('siteWeb').value = bien.siteWeb || '';
         document.getElementById('adresse').value = bien.adresse || '';
         document.getElementById('notes').value = bien.notes || '';
+
+        // Dépôt de garantie (location uniquement)
+        if (currentMode === 'location') {
+            document.getElementById('depotGarantie').value = bien.depotGarantie || '';
+        }
     } else {
         editingId = null;
         title.textContent = '➕ Nouveau Bien';
     }
-    
+
     modal.classList.add('active');
 }
 
@@ -435,17 +535,18 @@ function closeModal() {
 
 function handleFormSubmit(e) {
     e.preventDefault();
-    
+
+    const isLocation = currentMode === 'location';
+    const prixValue = parseFloat(document.getElementById('prix').value);
+
     const bien = {
         id: editingId || Date.now(),
         quartier: document.getElementById('quartier').value,
         type: document.getElementById('type').value,
-        prix: parseFloat(document.getElementById('prix').value),
         surface: parseFloat(document.getElementById('surface').value),
         pieces: parseInt(document.getElementById('pieces').value),
         dpe: document.getElementById('dpe').value,
         chauffage: document.getElementById('chauffage').value,
-        charges: parseFloat(document.getElementById('charges').value) || 0,
         parking: document.getElementById('parking').checked,
         cave: document.getElementById('cave').checked,
         terrasse: document.getElementById('terrasse').checked,
@@ -462,7 +563,17 @@ function handleFormSubmit(e) {
         adresse: document.getElementById('adresse').value,
         notes: document.getElementById('notes').value
     };
-    
+
+    // Ajouter le champ selon le mode
+    if (isLocation) {
+        bien.loyer = prixValue;
+        bien.charges = parseFloat(document.getElementById('charges').value) || 0;
+        bien.depotGarantie = parseFloat(document.getElementById('depotGarantie')?.value) || (prixValue * 2);
+    } else {
+        bien.prix = prixValue;
+        bien.charges = parseFloat(document.getElementById('charges').value) || 0;
+    }
+
     if (editingId) {
         // Modifier
         const index = biens.findIndex(b => b.id === editingId);
@@ -473,10 +584,10 @@ function handleFormSubmit(e) {
         // Ajouter
         biens.push(bien);
     }
-    
-    // Sauvegarder
-    saveData(biens);
-    
+
+    // Sauvegarder avec le mode actuel
+    saveData(biens, currentMode);
+
     // Mettre à jour l'affichage
     filteredBiens = [...biens];
     populateQuartierFilter();
@@ -491,11 +602,16 @@ function handleFormSubmit(e) {
 function viewBien(id) {
     const bien = biens.find(b => b.id === id);
     if (!bien) return;
-    
+
     const modal = document.getElementById('viewModal');
     const content = document.getElementById('viewContent');
-    const prixM2 = Math.round(bien.prix / bien.surface);
-    
+
+    const isLocation = currentMode === 'location';
+    const prix = isLocation ? (bien.loyer || 0) : (bien.prix || 0);
+    const prixLabel = isLocation ? 'Loyer' : 'Prix';
+    const prixM2 = Math.round(prix / bien.surface);
+    const chargesLabel = isLocation ? 'Charges mensuelles' : 'Charges annuelles';
+
     content.innerHTML = `
         <div class="detail-section">
             <h4>📍 Informations Générales</h4>
@@ -509,8 +625,8 @@ function viewBien(id) {
                     <span class="detail-value">${escapeHtml(bien.type)}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Prix</span>
-                    <span class="detail-value"><strong>${formatPrice(bien.prix)}</strong></span>
+                    <span class="detail-label">${prixLabel}</span>
+                    <span class="detail-value"><strong>${formatPrice(prix)}</strong></span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Surface</span>
@@ -524,9 +640,15 @@ function viewBien(id) {
                     <span class="detail-label">Prix/m²</span>
                     <span class="detail-value"><strong>${prixM2} €/m²</strong></span>
                 </div>
+                ${isLocation ? `
+                <div class="detail-item">
+                    <span class="detail-label">Dépôt de garantie</span>
+                    <span class="detail-value">${bien.depotGarantie ? formatPrice(bien.depotGarantie) : 'N/A'}</span>
+                </div>
+                ` : ''}
             </div>
         </div>
-        
+
         <div class="detail-section">
             <h4>🔧 Détails Techniques</h4>
             <div class="detail-grid">
@@ -539,7 +661,7 @@ function viewBien(id) {
                     <span class="detail-value">${escapeHtml(bien.chauffage || 'Non spécifié')}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Charges annuelles</span>
+                    <span class="detail-label">${chargesLabel}</span>
                     <span class="detail-value">${bien.charges ? formatPrice(bien.charges) : 'N/A'}</span>
                 </div>
                 <div class="detail-item">
@@ -626,8 +748,8 @@ function deleteBien(id) {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce bien ?')) {
         biens = biens.filter(b => b.id !== id);
         filteredBiens = filteredBiens.filter(b => b.id !== id);
-        
-        saveData(biens);
+
+        saveData(biens, currentMode);
         populateQuartierFilter();
         renderTable();
         renderStats();
@@ -641,16 +763,19 @@ function exportCSV() {
         alert('Aucune donnée à exporter');
         return;
     }
-    
+
+    const isLocation = currentMode === 'location';
+
     const headers = [
         'Quartier',
         'Type',
-        'Prix',
+        isLocation ? 'Loyer' : 'Prix',
         'Surface',
         'Pièces',
         'DPE',
         'Chauffage',
         'Charges',
+        ...(isLocation ? ['Dépôt de garantie'] : []),
         'Parking',
         'Cave',
         'Terrasse',
@@ -667,16 +792,17 @@ function exportCSV() {
         'Site Web',
         'Notes'
     ];
-    
+
     const rows = biens.map(bien => [
         bien.quartier,
         bien.type,
-        bien.prix,
+        isLocation ? (bien.loyer || '') : (bien.prix || ''),
         bien.surface,
         bien.pieces,
         bien.dpe,
         bien.chauffage || '',
         bien.charges || '',
+        ...(isLocation ? [bien.depotGarantie || ''] : []),
         bien.parking ? 'Oui' : 'Non',
         bien.cave ? 'Oui' : 'Non',
         bien.terrasse ? 'Oui' : 'Non',

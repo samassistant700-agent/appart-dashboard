@@ -1,7 +1,8 @@
 // Données de test pour le dashboard appartement
 // Ces données sont chargées au démarrage si localStorage est vide
 
-const sampleData = [
+// Données pour le mode ACHAT
+const sampleDataAchat = [
     {
         id: 1,
         quartier: "Centre-ville",
@@ -264,18 +265,241 @@ const sampleData = [
     }
 ];
 
-// Fonction pour charger les données
-function loadData() {
-    const stored = localStorage.getItem('appartements');
+// Données pour le mode LOCATION
+const sampleDataLocation = [
+    {
+        id: 1,
+        quartier: "Centre-ville",
+        type: "T2",
+        loyer: 850,
+        charges: 50,
+        surface: 45,
+        pieces: 2,
+        dpe: "D",
+        chauffage: "Électrique",
+        depotGarantie: 1700,
+        parking: true,
+        cave: true,
+        terrasse: false,
+        clim: false,
+        ascenseur: true,
+        balcon: false,
+        etat: "À voir",
+        datePublication: "2024-01-15",
+        dateContact: "2024-01-16",
+        dateVisite: "2024-01-20",
+        contact: "Agence Immo Sud",
+        tel: "04 67 00 00 00",
+        adresse: "12 Rue de la République",
+        siteWeb: "https://www.example.com/bien1",
+        notes: "Bien situé, proche commerces. Loyer charges comprises."
+    },
+    {
+        id: 2,
+        quartier: "Antigone",
+        type: "T3",
+        loyer: 1200,
+        charges: 80,
+        surface: 65,
+        pieces: 3,
+        dpe: "C",
+        chauffage: "Gaz",
+        depotGarantie: 2400,
+        parking: false,
+        cave: true,
+        terrasse: true,
+        clim: false,
+        ascenseur: true,
+        balcon: false,
+        etat: "Vu",
+        datePublication: "2024-01-10",
+        dateContact: "2024-01-11",
+        dateVisite: "2024-01-18",
+        contact: "Propriétaire",
+        tel: "06 12 34 56 78",
+        adresse: "Bâtiment C3, Avenue Picasso",
+        siteWeb: "",
+        notes: "Quartier calme, architecture moderne. Terrasse de 12m²."
+    },
+    {
+        id: 3,
+        quartier: "Comédie",
+        type: "T2",
+        loyer: 950,
+        charges: 60,
+        surface: 50,
+        pieces: 2,
+        dpe: "E",
+        chauffage: "Électrique",
+        depotGarantie: 1900,
+        parking: false,
+        cave: false,
+        terrasse: false,
+        clim: false,
+        ascenseur: false,
+        balcon: true,
+        etat: "Retenu",
+        datePublication: "2024-01-12",
+        dateContact: "2024-01-13",
+        dateVisite: "2024-01-19",
+        contact: "Agence Centre",
+        tel: "04 67 11 11 11",
+        adresse: "8 Rue de la Loge",
+        siteWeb: "https://www.example.com/bien3",
+        notes: "Emplacement idéal, balcon donnant cour intérieure."
+    },
+    {
+        id: 4,
+        quartier: "Ecusson",
+        type: "Studio",
+        loyer: 550,
+        charges: 40,
+        surface: 25,
+        pieces: 1,
+        dpe: "F",
+        chauffage: "Électrique",
+        depotGarantie: 1100,
+        parking: false,
+        cave: false,
+        terrasse: false,
+        clim: false,
+        ascenseur: false,
+        balcon: false,
+        etat: "Refusé",
+        datePublication: "2024-01-08",
+        dateContact: "2024-01-09",
+        dateVisite: "2024-01-15",
+        contact: "Agence Vieux",
+        tel: "04 67 22 22 22",
+        adresse: "3 Rue Jean-Jaurès",
+        siteWeb: "",
+        notes: "Trop petit, mauvaise isolation thermique."
+    },
+    {
+        id: 5,
+        quartier: "Port Marianne",
+        type: "T4",
+        loyer: 1500,
+        charges: 100,
+        surface: 85,
+        pieces: 4,
+        dpe: "B",
+        chauffage: "Pompe à chaleur",
+        depotGarantie: 3000,
+        parking: true,
+        cave: true,
+        terrasse: true,
+        clim: true,
+        ascenseur: true,
+        balcon: false,
+        etat: "À voir",
+        datePublication: "2024-01-18",
+        dateContact: "2024-01-19",
+        dateVisite: "",
+        contact: "Promoteur Neuf",
+        tel: "04 67 33 33 33",
+        adresse: "Rue de Berlin",
+        siteWeb: "https://www.example.com/bien5",
+        notes: "Neuf, label BBC. Terrasse de 20m². Parking inclus."
+    },
+    {
+        id: 6,
+        quartier: "Beaux-Arts",
+        type: "T3",
+        loyer: 1100,
+        charges: 70,
+        surface: 60,
+        pieces: 3,
+        dpe: "D",
+        chauffage: "Gaz",
+        depotGarantie: 2200,
+        parking: false,
+        cave: true,
+        terrasse: false,
+        clim: false,
+        ascenseur: true,
+        balcon: true,
+        etat: "Vu",
+        datePublication: "2024-01-16",
+        dateContact: "2024-01-17",
+        dateVisite: "2024-01-22",
+        contact: "Agence Artistes",
+        tel: "04 67 44 44 44",
+        adresse: "22 Rue des Écoles",
+        siteWeb: "https://www.example.com/bien7",
+        notes: "Quartier étudiant, proche tram. Hauts plafonds."
+    },
+    {
+        id: 7,
+        quartier: "Figuerolles",
+        type: "T3",
+        loyer: 980,
+        charges: 65,
+        surface: 62,
+        pieces: 3,
+        dpe: "D",
+        chauffage: "Collectif",
+        depotGarantie: 1960,
+        parking: true,
+        cave: true,
+        terrasse: false,
+        clim: false,
+        ascenseur: true,
+        balcon: true,
+        etat: "À voir",
+        datePublication: "2024-01-19",
+        dateContact: "2024-01-20",
+        dateVisite: "",
+        contact: "Agence Nord",
+        tel: "04 67 66 66 66",
+        adresse: "Avenue de Figuerolles",
+        siteWeb: "https://www.example.com/bien9",
+        notes: "Quartier résidentiel, proche écoles. Parking privatif."
+    },
+    {
+        id: 8,
+        quartier: "Gambetta",
+        type: "T4",
+        loyer: 1350,
+        charges: 90,
+        surface: 80,
+        pieces: 4,
+        dpe: "C",
+        chauffage: "Gaz",
+        depotGarantie: 2700,
+        parking: true,
+        cave: true,
+        terrasse: false,
+        clim: false,
+        ascenseur: true,
+        balcon: true,
+        etat: "Retenu",
+        datePublication: "2024-01-13",
+        dateContact: "2024-01-14",
+        dateVisite: "2024-01-20",
+        contact: "Agence Gambetta",
+        tel: "04 67 77 77 77",
+        adresse: "Boulevard Gambetta",
+        siteWeb: "",
+        notes: "Appartement lumineux, balcon traversant. Bon plan."
+    }
+];
+
+// Fonction pour charger les données selon le mode
+function loadData(mode = 'achat') {
+    const key = mode === 'location' ? 'appartements_location' : 'appartements_achat';
+    const stored = localStorage.getItem(key);
     if (stored) {
         return JSON.parse(stored);
     }
-    // Si aucune donnée stockée, utiliser les données de test
-    localStorage.setItem('appartements', JSON.stringify(sampleData));
+    // Si aucune donnée stockée, utiliser les données de test appropriées
+    const sampleData = mode === 'location' ? sampleDataLocation : sampleDataAchat;
+    localStorage.setItem(key, JSON.stringify(sampleData));
     return sampleData;
 }
 
-// Fonction pour sauvegarder les données
-function saveData(data) {
-    localStorage.setItem('appartements', JSON.stringify(data));
+// Fonction pour sauvegarder les données selon le mode
+function saveData(data, mode = 'achat') {
+    const key = mode === 'location' ? 'appartements_location' : 'appartements_achat';
+    localStorage.setItem(key, JSON.stringify(data));
 }
