@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Recherche Appartement</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>🏠 Dashboard Appartements</h1>
+                <span class="subtitle">Gestion de recherche de bien immobilier</span>
+            </div>
+            <div class="header-right">
+                <button id="themeToggle" class="btn-icon" title="Changer le thème">
+                    <span class="icon-theme">🌙</span>
+                </button>
+                <button id="addBtn" class="btn btn-primary">
+                    <span class="icon">➕</span> Nouveau Bien
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Dashboard -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon">🏘️</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalBiens">0</div>
+                    <div class="stat-label">Total Biens</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon status-voir">👀</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statVoir">0</div>
+                    <div class="stat-label">À Voir</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon status-vu">✅</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statVu">0</div>
+                    <div class="stat-label">Vus</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon status-retenu">⭐</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statRetenu">0</div>
+                    <div class="stat-label">Retenus</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon status-refuse">❌</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statRefuse">0</div>
+                    <div class="stat-label">Refusés</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>📍 Répartition par Quartier</h3>
+                <canvas id="quartierChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🏷️ Répartition par DPE</h3>
+                <canvas id="dpeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="filters-header">
+                <h2>🔍 Filtres</h2>
+                <button id="clearFilters" class="btn btn-secondary">Effacer</button>
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Prix (€)</label>
+                    <div class="filter-range">
+                        <input type="number" id="prixMin" placeholder="Min" class="filter-input">
+                        <span>-</span>
+                        <input type="number" id="prixMax" placeholder="Max" class="filter-input">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Surface (m²)</label>
+                    <div class="filter-range">
+                        <input type="number" id="surfaceMin" placeholder="Min" class="filter-input">
+                        <span>-</span>
+                        <input type="number" id="surfaceMax" placeholder="Max" class="filter-input">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Pièces</label>
+                    <select id="piecesFilter" class="filter-select">
+                        <option value="">Tous</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5+</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Quartier</label>
+                    <select id="quartierFilter" class="filter-select">
+                        <option value="">Tous</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>DPE</label>
+                    <div class="filter-checkboxes" id="dpeFilter">
+                        <label><input type="checkbox" value="A"> A</label>
+                        <label><input type="checkbox" value="B"> B</label>
+                        <label><input type="checkbox" value="C"> C</label>
+                        <label><input type="checkbox" value="D"> D</label>
+                        <label><input type="checkbox" value="E"> E</label>
+                        <label><input type="checkbox" value="F"> F</label>
+                        <label><input type="checkbox" value="G"> G</label>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>État</label>
+                    <div class="filter-checkboxes" id="etatFilter">
+                        <label><input type="checkbox" value="À voir"> À voir</label>
+                        <label><input type="checkbox" value="Vu"> Vu</label>
+                        <label><input type="checkbox" value="Retenu"> Retenu</label>
+                        <label><input type="checkbox" value="Refusé"> Refusé</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <h2>📋 Liste des Biens</h2>
+                <button id="exportBtn" class="btn btn-secondary">
+                    <span class="icon">📥</span> Export CSV
+                </button>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table" id="biensTable">
+                    <thead>
+                        <tr>
+                            <th>Quartier</th>
+                            <th>Type</th>
+                            <th>Prix</th>
+                            <th>Surface</th>
+                            <th>Pièces</th>
+                            <th>Prix/m²</th>
+                            <th>DPE</th>
+                            <th>État</th>
+                            <th>Équipements</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="biensTableBody">
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="noResults" class="no-results" style="display: none;">
+                <p>😕 Aucun bien ne correspond aux filtres</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Add/Edit -->
+    <div id="bienModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">➕ Nouveau Bien</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <form id="bienForm" class="modal-body">
+                <input type="hidden" id="bienId">
+                
+                <div class="form-section">
+                    <h3>📍 Informations Générales</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="quartier">Quartier *</label>
+                            <input type="text" id="quartier" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="type">Type *</label>
+                            <select id="type" required class="form-select">
+                                <option value="">Sélectionner</option>
+                                <option value="T1">T1</option>
+                                <option value="T2">T2</option>
+                                <option value="T3">T3</option>
+                                <option value="T4">T4</option>
+                                <option value="T5">T5</option>
+                                <option value="Studio">Studio</option>
+                                <option value="Duplex">Duplex</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="prix">Prix (€) *</label>
+                            <input type="number" id="prix" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="surface">Surface (m²) *</label>
+                            <input type="number" id="surface" required class="form-input" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="pieces">Nb Pièces *</label>
+                            <input type="number" id="pieces" required class="form-input" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="dpe">DPE *</label>
+                            <select id="dpe" required class="form-select">
+                                <option value="">Sélectionner</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                                <option value="E">E</option>
+                                <option value="F">F</option>
+                                <option value="G">G</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🔧 Détails</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="chauffage">Type de Chauffage</label>
+                            <select id="chauffage" class="form-select">
+                                <option value="">Non spécifié</option>
+                                <option value="Gaz">Gaz</option>
+                                <option value="Électrique">Électrique</option>
+                                <option value="Fuel">Fuel</option>
+                                <option value="Bois">Bois</option>
+                                <option value="Pompe à chaleur">Pompe à chaleur</option>
+                                <option value="Collectif">Collectif</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="charges">Charges Annuelles (€)</label>
+                            <input type="number" id="charges" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="etat">État *</label>
+                            <select id="etat" required class="form-select">
+                                <option value="À voir">À voir</option>
+                                <option value="Vu">Vu</option>
+                                <option value="Retenu">Retenu</option>
+                                <option value="Refusé">Refusé</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🚗 Équipements</h3>
+                    <div class="form-checkboxes">
+                        <label><input type="checkbox" id="parking"> Parking</label>
+                        <label><input type="checkbox" id="cave"> Cave</label>
+                        <label><input type="checkbox" id="terrasse"> Terrasse</label>
+                        <label><input type="checkbox" id="clim"> Climatisation</label>
+                        <label><input type="checkbox" id="ascenseur"> Ascenseur</label>
+                        <label><input type="checkbox" id="balcon"> Balcon</label>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📅 Dates & Contact</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="datePublication">Date Publication</label>
+                            <input type="date" id="datePublication" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="dateContact">Date Prise de Contact</label>
+                            <input type="date" id="dateContact" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="dateVisite">Date Visite</label>
+                            <input type="date" id="dateVisite" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="contact">Contact</label>
+                            <input type="text" id="contact" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="tel">Téléphone</label>
+                            <input type="tel" id="tel" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="siteWeb">Site Web</label>
+                            <input type="url" id="siteWeb" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📝 Adresse & Notes</h3>
+                    <div class="form-group">
+                        <label for="adresse">Adresse</label>
+                        <input type="text" id="adresse" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" class="form-textarea" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="modalCancel">Annuler</button>
+                    <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal View Details -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>📋 Détails du Bien</h2>
+                <button class="modal-close" id="viewClose">&times;</button>
+            </div>
+            <div class="modal-body" id="viewContent">
+                <!-- Details will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
