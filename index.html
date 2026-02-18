@@ -171,15 +171,15 @@
                 <table class="data-table" id="biensTable">
                     <thead>
                         <tr>
-                            <th>Quartier</th>
-                            <th>Type</th>
-                            <th id="thPrix">Prix</th>
-                            <th>Surface</th>
+                            <th data-sort="quartier" class="sortable">Quartier<span class="sort-icon"></span></th>
+                            <th data-sort="type" class="sortable">Type<span class="sort-icon"></span></th>
+                            <th id="thPrix" data-sort="loyer" class="sortable">Prix<span class="sort-icon"></span></th>
+                            <th data-sort="surface" class="sortable">Surface<span class="sort-icon"></span></th>
                             <th>Meublé</th>
                             <th>Nb Pièces</th>
-                            <th id="thPrixM2">Prix/m²</th>
-                            <th id="thCharges">Charges</th>
-                            <th>DPE</th>
+                            <th id="thPrixM2" data-sort="prixM2" class="sortable">Prix/m²<span class="sort-icon"></span></th>
+                            <th id="thCharges" data-sort="charges" class="sortable">Charges<span class="sort-icon"></span></th>
+                            <th data-sort="dpe" class="sortable">DPE<span class="sort-icon"></span></th>
                             <th>État</th>
                             <th>Équipements</th>
                             <th>Actions</th>
@@ -287,10 +287,20 @@
                         <div class="form-group">
                             <label for="etat">État *</label>
                             <select id="etat" required class="form-select">
-                                <option value="À voir">À voir</option>
-                                <option value="Vu">Vu</option>
-                                <option value="Retenu">Retenu</option>
-                                <option value="Refusé">Refusé</option>
+                                <optgroup label="Location" id="etatLocationGroup">
+                                    <option value="Nouveau">🔵 Nouveau</option>
+                                    <option value="Contacté">🟡 Contacté</option>
+                                    <option value="En attente de rappel">🟠 En attente de rappel</option>
+                                    <option value="Rendez-vous visite">🟣 Rendez-vous visite</option>
+                                    <option value="Il faut appeler">🩺 Il faut appeler</option>
+                                    <option value="Refusé">🔴 Refusé</option>
+                                </optgroup>
+                                <optgroup label="Achat" id="etatAchatGroup">
+                                    <option value="À voir">À voir</option>
+                                    <option value="Vu">Vu</option>
+                                    <option value="Retenu">Retenu</option>
+                                    <option value="Refusé">Refusé</option>
+                                </optgroup>
                             </select>
                         </div>
                     </div>
