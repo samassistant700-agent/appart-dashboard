@@ -2,8 +2,8 @@
  * Gestion du thème clair/sombre
  */
 
-import { STORAGE_KEYS } from '../config.js';
-import { qs } from '../utils/dom.js';
+import { STORAGE_KEYS } from './config.js';
+import { qs } from './utils/dom.js';
 
 const THEME = {
     LIGHT: 'light',

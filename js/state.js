@@ -3,7 +3,7 @@
  * Pattern: Module state avec getters/setters
  */
 
-import { CONFIG, STORAGE_KEYS } from '../config.js';
+import { CONFIG, STORAGE_KEYS } from './config.js';
 
 // État privé
 const _state = {

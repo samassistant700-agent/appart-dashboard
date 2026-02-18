@@ -2,10 +2,10 @@
  * Gestion du mode Achat/Location
  */
 
-import { CONFIG, STORAGE_KEYS } from '../config.js';
-import { state, setMode } from '../state.js';
-import { loadData, saveData } from '../data.js';
-import { qs } from '../utils/dom.js';
+import { CONFIG, STORAGE_KEYS } from './config.js';
+import { state, setMode } from './state.js';
+import { loadData, saveData } from './data.js';
+import { qs } from './utils/dom.js';
 import { renderTable } from './table/render.js';
 import { renderStats } from './stats/index.js';
 import { renderCharts } from './stats/charts.js';
