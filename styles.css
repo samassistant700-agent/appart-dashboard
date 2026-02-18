@@ -363,6 +363,38 @@ body {
     accent-color: var(--primary-color);
 }
 
+/* Charges Toggle */
+.charges-toggle {
+    display: flex;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    gap: 4px;
+}
+
+.charges-toggle-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.charges-toggle-btn:hover {
+    background: var(--bg-hover);
+}
+
+.charges-toggle-btn.active {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
 /* ===== Table ===== */
 .table-section {
     background: var(--bg-primary);
