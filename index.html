@@ -145,6 +145,17 @@
                         <label><input type="checkbox" value="Refusé"> Refusé</label>
                     </div>
                 </div>
+                <div class="filter-group">
+                    <label>Charges</label>
+                    <div class="charges-toggle">
+                        <button class="charges-toggle-btn active" id="chargesMensuelles" data-mode="mensuelles">
+                            Mensuelles
+                        </button>
+                        <button class="charges-toggle-btn" id="chargesAnnuelles" data-mode="annuelles">
+                            Annuelles
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -164,8 +175,10 @@
                             <th>Type</th>
                             <th id="thPrix">Prix</th>
                             <th>Surface</th>
-                            <th>Pièces</th>
+                            <th>Meublé</th>
+                            <th>Nb Pièces</th>
                             <th id="thPrixM2">Prix/m²</th>
+                            <th id="thCharges">Charges</th>
                             <th>DPE</th>
                             <th>État</th>
                             <th>Équipements</th>
@@ -228,6 +241,13 @@
                         <div class="form-group">
                             <label for="pieces">Nb Pièces *</label>
                             <input type="number" id="pieces" required class="form-input" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="meublé">Meublé</label>
+                            <select id="meublé" class="form-select">
+                                <option value="false">Non</option>
+                                <option value="true">Oui</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="dpe">DPE *</label>

@@ -3,6 +3,7 @@ let biens = [];
 let filteredBiens = [];
 let editingId = null;
 let currentMode = 'achat'; // 'achat' ou 'location'
+let displayChargesMode = 'mensuelles'; // 'mensuelles' ou 'annuelles'
 
 // ===== INITIALISATION =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialiser l'application
     initTheme();
     initModeSelector();
+    toggleChargesMode('mensuelles'); // Initialiser le toggle charges
     populateQuartierFilter();
     updateLabelsAndForm();
     renderTable();
@@ -107,7 +109,14 @@ function updateLabelsAndForm() {
 
     // Labels dans le formulaire
     document.getElementById('labelPrix').textContent = isLocation ? 'Loyer mensuel (€) *' : 'Prix (€) *';
-    document.getElementById('labelCharges').textContent = isLocation ? 'Charges mensuelles (€)' : 'Charges Annuelles (€)';
+    
+    // Label des charges selon le mode (mensuelles ou annuelles)
+    const labelCharges = document.getElementById('labelCharges');
+    if (displayChargesMode === 'mensuelles') {
+        labelCharges.textContent = 'Charges mensuelles (€)';
+    } else {
+        labelCharges.textContent = 'Charges annuelles (€)';
+    }
 
     // Afficher/masquer le champ dépôt de garantie
     const depotGroup = document.getElementById('depotGarantieGroup');
@@ -155,12 +164,42 @@ function initEventListeners() {
     // Export CSV
     document.getElementById('exportBtn').addEventListener('click', exportCSV);
     
+    // Toggle charges mensuelles/annuelles
+    document.getElementById('chargesMensuelles').addEventListener('click', () => toggleChargesMode('mensuelles'));
+    document.getElementById('chargesAnnuelles').addEventListener('click', () => toggleChargesMode('annuelles'));
+    
     // Fermer modal en cliquant à l'extérieur
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
             e.target.classList.remove('active');
         }
     });
+}
+
+// ===== TOGGLE CHARGES =====
+function toggleChargesMode(mode) {
+    displayChargesMode = mode;
+    
+    // Mettre à jour l'UI du toggle
+    const btnMensuelles = document.getElementById('chargesMensuelles');
+    const btnAnnuelles = document.getElementById('chargesAnnuelles');
+    const thCharges = document.getElementById('thCharges');
+    
+    if (mode === 'mensuelles') {
+        btnMensuelles.classList.add('active');
+        btnAnnuelles.classList.remove('active');
+        thCharges.textContent = currentMode === 'location' ? 'Charges/mois' : 'Charges/mois';
+    } else {
+        btnAnnuelles.classList.add('active');
+        btnMensuelles.classList.remove('active');
+        thCharges.textContent = 'Charges/an';
+    }
+    
+    // Mettre à jour le label dans le formulaire
+    updateLabelsAndForm();
+    
+    // Rafraîchir le tableau
+    renderTable();
 }
 
 // ===== FILTRES =====
@@ -252,6 +291,21 @@ function renderTable() {
         const prixLabel = isLocation ? formatPrice(bien.loyer || 0) : formatPrice(bien.prix || 0);
         const prixM2 = Math.round(prix / bien.surface);
 
+        // Déterminer les charges à afficher (mensuelles ou annuelles)
+        let chargesValue = 0;
+        if (displayChargesMode === 'mensuelles') {
+            // Mode mensuelles : utiliser charges mensuelles
+            chargesValue = bien.charges || 0;
+        } else {
+            // Mode annuelles : utiliser charges_annuelles ou calculer depuis charges
+            if (bien.charges_annuelles !== undefined) {
+                chargesValue = bien.charges_annuelles;
+            } else {
+                // Calculer les charges annuelles depuis les mensuelles (x12)
+                chargesValue = (bien.charges || 0) * 12;
+            }
+        }
+
         const statusClass = getStatusClass(bien.etat);
         const dpeClass = `badge-dpe-${bien.dpe.toLowerCase()}`;
         const equipmentIcons = getEquipmentIcons(bien);
@@ -262,8 +316,10 @@ function renderTable() {
                 <td>${escapeHtml(bien.type)}</td>
                 <td><strong>${prixLabel}</strong></td>
                 <td>${bien.surface} m²</td>
+                <td>${bien.meublé ? '🏠' : ''}</td>
                 <td>${bien.pieces}</td>
                 <td><strong>${prixM2} €/m²</strong></td>
+                <td>${chargesValue ? formatPrice(chargesValue) : '-'}</td>
                 <td><span class="badge badge-dpe ${dpeClass}">${bien.dpe}</span></td>
                 <td><span class="badge ${statusClass}">${bien.etat}</span></td>
                 <td><div class="equipment-icons">${equipmentIcons}</div></td>
@@ -497,9 +553,15 @@ function openModal(bien = null) {
         document.getElementById('prix').value = prixValue;
         document.getElementById('surface').value = bien.surface;
         document.getElementById('pieces').value = bien.pieces;
+        document.getElementById('meublé').value = bien.meublé ? 'true' : 'false';
         document.getElementById('dpe').value = bien.dpe;
         document.getElementById('chauffage').value = bien.chauffage || '';
-        document.getElementById('charges').value = bien.charges || '';
+        
+        // Charger les charges selon le mode d'affichage
+        const chargesValue = displayChargesMode === 'mensuelles' 
+            ? (bien.charges || 0) 
+            : (bien.charges_annuelles || (bien.charges || 0) * 12);
+        document.getElementById('charges').value = chargesValue || '';
         document.getElementById('etat').value = bien.etat;
         document.getElementById('parking').checked = bien.parking;
         document.getElementById('cave').checked = bien.cave;
@@ -545,6 +607,7 @@ function handleFormSubmit(e) {
         type: document.getElementById('type').value,
         surface: parseFloat(document.getElementById('surface').value),
         pieces: parseInt(document.getElementById('pieces').value),
+        meublé: document.getElementById('meublé').value === 'true',
         dpe: document.getElementById('dpe').value,
         chauffage: document.getElementById('chauffage').value,
         parking: document.getElementById('parking').checked,
@@ -567,11 +630,30 @@ function handleFormSubmit(e) {
     // Ajouter le champ selon le mode
     if (isLocation) {
         bien.loyer = prixValue;
-        bien.charges = parseFloat(document.getElementById('charges').value) || 0;
+        const chargesValue = parseFloat(document.getElementById('charges').value) || 0;
+        
+        // Sauvegarder les charges selon le mode d'affichage
+        if (displayChargesMode === 'mensuelles') {
+            bien.charges = chargesValue;
+            bien.charges_annuelles = chargesValue * 12;
+        } else {
+            bien.charges_annuelles = chargesValue;
+            bien.charges = chargesValue / 12;
+        }
+        
         bien.depotGarantie = parseFloat(document.getElementById('depotGarantie')?.value) || (prixValue * 2);
     } else {
         bien.prix = prixValue;
-        bien.charges = parseFloat(document.getElementById('charges').value) || 0;
+        const chargesValue = parseFloat(document.getElementById('charges').value) || 0;
+        
+        // Sauvegarder les charges selon le mode d'affichage
+        if (displayChargesMode === 'mensuelles') {
+            bien.charges = chargesValue;
+            bien.charges_annuelles = chargesValue * 12;
+        } else {
+            bien.charges_annuelles = chargesValue;
+            bien.charges = chargesValue / 12;
+        }
     }
 
     if (editingId) {
@@ -633,6 +715,10 @@ function viewBien(id) {
                     <span class="detail-value">${bien.surface} m²</span>
                 </div>
                 <div class="detail-item">
+                    <span class="detail-label">Meublé</span>
+                    <span class="detail-value">${bien.meublé ? '🏠 Oui' : 'Non'}</span>
+                </div>
+                <div class="detail-item">
                     <span class="detail-label">Pièces</span>
                     <span class="detail-value">${bien.pieces}</span>
                 </div>
@@ -661,8 +747,12 @@ function viewBien(id) {
                     <span class="detail-value">${escapeHtml(bien.chauffage || 'Non spécifié')}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">${chargesLabel}</span>
+                    <span class="detail-label">Charges mensuelles</span>
                     <span class="detail-value">${bien.charges ? formatPrice(bien.charges) : 'N/A'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Charges annuelles</span>
+                    <span class="detail-value">${bien.charges_annuelles ? formatPrice(bien.charges_annuelles) : (bien.charges ? formatPrice(bien.charges * 12) : 'N/A')}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">État</span>
@@ -771,10 +861,12 @@ function exportCSV() {
         'Type',
         isLocation ? 'Loyer' : 'Prix',
         'Surface',
-        'Pièces',
+        'Meublé',
+        'Nb Pièces',
         'DPE',
         'Chauffage',
-        'Charges',
+        'Charges mensuelles',
+        'Charges annuelles',
         ...(isLocation ? ['Dépôt de garantie'] : []),
         'Parking',
         'Cave',
@@ -798,10 +890,12 @@ function exportCSV() {
         bien.type,
         isLocation ? (bien.loyer || '') : (bien.prix || ''),
         bien.surface,
+        bien.meublé ? 'Oui' : 'Non',
         bien.pieces,
         bien.dpe,
         bien.chauffage || '',
         bien.charges || '',
+        bien.charges_annuelles || (bien.charges ? bien.charges * 12 : ''),
         ...(isLocation ? [bien.depotGarantie || ''] : []),
         bien.parking ? 'Oui' : 'Non',
         bien.cave ? 'Oui' : 'Non',
