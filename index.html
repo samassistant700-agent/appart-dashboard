@@ -15,6 +15,15 @@
                 <span class="subtitle">Gestion de recherche de bien immobilier</span>
             </div>
             <div class="header-right">
+                <!-- Mode Selector -->
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="achat" id="modeAchat">
+                        🏢 Achat
+                    </button>
+                    <button class="mode-btn" data-mode="location" id="modeLocation">
+                        🔑 Location
+                    </button>
+                </div>
                 <button id="themeToggle" class="btn-icon" title="Changer le thème">
                     <span class="icon-theme">🌙</span>
                 </button>
@@ -136,6 +145,17 @@
                         <label><input type="checkbox" value="Refusé"> Refusé</label>
                     </div>
                 </div>
+                <div class="filter-group">
+                    <label>Charges</label>
+                    <div class="charges-toggle">
+                        <button class="charges-toggle-btn active" id="chargesMensuelles" data-mode="mensuelles">
+                            Mensuelles
+                        </button>
+                        <button class="charges-toggle-btn" id="chargesAnnuelles" data-mode="annuelles">
+                            Annuelles
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -151,13 +171,15 @@
                 <table class="data-table" id="biensTable">
                     <thead>
                         <tr>
-                            <th>Quartier</th>
-                            <th>Type</th>
-                            <th>Prix</th>
-                            <th>Surface</th>
-                            <th>Pièces</th>
-                            <th>Prix/m²</th>
-                            <th>DPE</th>
+                            <th data-sort="quartier" class="sortable" aria-label="Trier par quartier">Quartier<span class="sort-icon"></span></th>
+                            <th data-sort="type" class="sortable" aria-label="Trier par type">Type<span class="sort-icon"></span></th>
+                            <th id="thPrix" data-sort="loyer" class="sortable" aria-label="Trier par prix">Prix<span class="sort-icon"></span></th>
+                            <th data-sort="surface" class="sortable" aria-label="Trier par surface">Surface<span class="sort-icon"></span></th>
+                            <th>Meublé</th>
+                            <th>Nb Pièces</th>
+                            <th id="thPrixM2" data-sort="prixM2" class="sortable" aria-label="Trier par prix au m²">Prix/m²<span class="sort-icon"></span></th>
+                            <th id="thCharges" data-sort="charges" class="sortable" aria-label="Trier par charges">Charges<span class="sort-icon"></span></th>
+                            <th data-sort="dpe" class="sortable" aria-label="Trier par DPE">DPE<span class="sort-icon"></span></th>
                             <th>État</th>
                             <th>Équipements</th>
                             <th>Actions</th>
@@ -205,8 +227,12 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="prix">Prix (€) *</label>
+                            <label for="prix" id="labelPrix">Prix (€) *</label>
                             <input type="number" id="prix" required class="form-input">
+                        </div>
+                        <div class="form-group" id="depotGarantieGroup" style="display: none;">
+                            <label for="depotGarantie">Dépôt de Garantie (€)</label>
+                            <input type="number" id="depotGarantie" class="form-input" placeholder="Calculé automatiquement (2x loyer)">
                         </div>
                         <div class="form-group">
                             <label for="surface">Surface (m²) *</label>
@@ -215,6 +241,13 @@
                         <div class="form-group">
                             <label for="pieces">Nb Pièces *</label>
                             <input type="number" id="pieces" required class="form-input" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="meublé">Meublé</label>
+                            <select id="meublé" class="form-select">
+                                <option value="false">Non</option>
+                                <option value="true">Oui</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="dpe">DPE *</label>
@@ -248,16 +281,26 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="charges">Charges Annuelles (€)</label>
+                            <label for="charges" id="labelCharges">Charges Annuelles (€)</label>
                             <input type="number" id="charges" class="form-input">
                         </div>
                         <div class="form-group">
                             <label for="etat">État *</label>
                             <select id="etat" required class="form-select">
-                                <option value="À voir">À voir</option>
-                                <option value="Vu">Vu</option>
-                                <option value="Retenu">Retenu</option>
-                                <option value="Refusé">Refusé</option>
+                                <optgroup label="Location" id="etatLocationGroup">
+                                    <option value="Nouveau" class="status-nouveau">● Nouveau</option>
+                                    <option value="Contacté" class="status-contacte">● Contacté</option>
+                                    <option value="En attente de rappel" class="status-attente">● En attente de rappel</option>
+                                    <option value="Rendez-vous visite" class="status-visite">● Rendez-vous visite</option>
+                                    <option value="Il faut appeler" class="status-appeler">● Il faut appeler</option>
+                                    <option value="Refusé" class="status-refuse">● Refusé</option>
+                                </optgroup>
+                                <optgroup label="Achat" id="etatAchatGroup">
+                                    <option value="À voir">À voir</option>
+                                    <option value="Vu">Vu</option>
+                                    <option value="Retenu">Retenu</option>
+                                    <option value="Refusé">Refusé</option>
+                                </optgroup>
                             </select>
                         </div>
                     </div>
@@ -338,7 +381,6 @@
         </div>
     </div>
 
-    <script src="data.js"></script>
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

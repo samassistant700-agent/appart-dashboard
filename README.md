@@ -1,6 +1,39 @@
 # Dashboard Recherche Appartement
 
-Application web interactive pour gérer sa recherche d'appartement.
+Application web interactive pour gérer sa recherche d'appartement (Achat & Location).
+
+## 🔄 Workflow Git (Pro)
+
+**Pour toute modification :**
+
+```bash
+# 1. Créer une branche feature
+git checkout -b feature/ma-fonctionnalite
+
+# 2. Faire les modifications
+# ... éditer les fichiers ...
+
+# 3. Committer
+git add .
+git commit -m "Description claire de la modification"
+
+# 4. Pusher la branche
+git push -u origin feature/ma-fonctionnalite
+
+# 5. Créer une Pull Request
+gh pr create --title "Feature: Ma fonctionnalité" --body "Description détaillée"
+
+# 6. Après review et merge, supprimer la branche
+git checkout main
+git pull
+git branch -d feature/ma-fonctionnalite
+```
+
+**Règles :**
+- ✅ Toujours travailler sur une branche `feature/`
+- ✅ Commit messages clairs et descriptifs
+- ✅ Pull Request avant de merger dans `main`
+- ❌ JAMAIS de push direct sur `main` (sauf hotfix urgent)
 
 ## 🚀 Installation
 
@@ -8,6 +41,15 @@ Application web interactive pour gérer sa recherche d'appartement.
 2. Aucune installation ni serveur requis!
 
 ## ✨ Fonctionnalités
+
+### 🔄 Mode Achat / Location
+- **Sélecteur de mode** dans le header
+- **Données séparées** pour chaque mode (localStorage)
+- **Labels adaptatifs** :
+  - Prix ↔ Loyer mensuel
+  - Charges annuelles ↔ Charges mensuelles
+  - Dépôt de garantie (location uniquement)
+- **10 biens de test** en achat + **8 biens de test** en location
 
 ### 📊 Tableau de bord
 - **Statistiques en temps réel**: Compteurs pour tous les biens, à voir, vus, retenus, refusés
@@ -50,14 +92,15 @@ Application web interactive pour gérer sa recherche d'appartement.
 ### Informations Générales
 - Quartier *
 - Type (T1-T5, Studio, Duplex) *
-- Prix (€) *
+- Prix (€) / Loyer mensuel (€) *
 - Surface (m²) *
 - Nombre de pièces *
 - DPE (A-G) *
+- Dépôt de garantie (€) - **Location uniquement**
 
 ### Détails Techniques
 - Type de chauffage
-- Charges annuelles (€)
+- Charges annuelles (Achat) / mensuelles (Location) (€)
 - État (À voir/Vu/Retenu/Refusé) *
 
 ### Équipements
@@ -116,23 +159,31 @@ Application web interactive pour gérer sa recherche d'appartement.
 
 ## 🔧 Stockage des Données
 
-Les données sont stockées dans le **localStorage** du navigateur sous la clé `appartements`.
+Les données sont stockées dans le **localStorage** du navigateur :
+- `appartements_achat` : Données mode Achat
+- `appartements_location` : Données mode Location
 
 ### Sauvegarder les données
 ```javascript
 // Les données sont automatiquement sauvegardées à chaque modification
-localStorage.setItem('appartements', JSON.stringify(data));
+localStorage.setItem('appartements_achat', JSON.stringify(dataAchat));
+localStorage.setItem('appartements_location', JSON.stringify(dataLocation));
 ```
 
 ### Exporter manuellement
 Ouvrir la console du navigateur et exécuter :
 ```javascript
-copy(JSON.parse(localStorage.getItem('appartements')));
+// Achat
+copy(JSON.parse(localStorage.getItem('appartements_achat')));
+
+// Location
+copy(JSON.parse(localStorage.getItem('appartements_location')));
 ```
 
 ### Importer des données
 ```javascript
-localStorage.setItem('appartements', JSON.stringify(vosDonnées));
+localStorage.setItem('appartements_achat', JSON.stringify(vosDonneesAchat));
+localStorage.setItem('appartements_location', JSON.stringify(vosDonneesLocation));
 location.reload();
 ```
 
