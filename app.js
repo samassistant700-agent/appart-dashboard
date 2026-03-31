@@ -4,6 +4,8 @@ let filteredBiens = [];
 let editingId = null;
 let currentMode = 'achat'; // 'achat' ou 'location'
 let displayChargesMode = 'mensuelles'; // 'mensuelles' ou 'annuelles'
+let sortColumn = null; // Colonne actuellement triée
+let sortDirection = 'asc'; // 'asc' ou 'desc'
 
 // ===== INITIALISATION =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initModeSelector();
     populateQuartierFilter();
     updateLabelsAndForm();
+    updateEtatFormOptions(); // Initialiser les options d'état du formulaire
     renderTable();
     renderStats();
     renderCharts();
@@ -85,6 +88,7 @@ function switchMode(newMode) {
     // Rafraîchir l'interface
     populateQuartierFilter();
     updateLabelsAndForm();
+    updateEtatFormOptions(); // Mettre à jour les options du formulaire
     renderTable();
     renderStats();
     renderCharts();
@@ -141,6 +145,99 @@ function updateLabelsAndForm() {
     // Mettre à jour les placeholders des filtres
     document.getElementById('prixMin').placeholder = isLocation ? 'Loyer min' : 'Prix min';
     document.getElementById('prixMax').placeholder = isLocation ? 'Loyer max' : 'Prix max';
+    
+    // Mettre à jour les filtres d'état selon le mode
+    updateEtatFilters();
+    
+    // Mettre à jour le select d'état dans le formulaire
+    updateEtatFormOptions();
+}
+
+// ===== OPTIONS ÉTAT DANS LE FORMULAIRE =====
+function updateEtatFormOptions() {
+    const etatSelect = document.getElementById('etat');
+    const locationGroup = document.getElementById('etatLocationGroup');
+    const achatGroup = document.getElementById('etatAchatGroup');
+    
+    if (!etatSelect || !locationGroup || !achatGroup) return;
+    
+    if (currentMode === 'location') {
+        // Mode location: désactiver le groupe achat, activer le groupe location
+        locationGroup.style.display = 'block';
+        achatGroup.style.display = 'none';
+        
+        // Sélectionner le premier état location par défaut
+        if (!etatSelect.value || !['Nouveau', 'Contacté', 'En attente de rappel', 'Rendez-vous visite', 'Il faut appeler', 'Refusé'].includes(etatSelect.value)) {
+            etatSelect.value = 'Nouveau';
+        }
+    } else {
+        // Mode achat: désactiver le groupe location, activer le groupe achat
+        locationGroup.style.display = 'none';
+        achatGroup.style.display = 'block';
+        
+        // Sélectionner le premier état achat par défaut
+        if (!etatSelect.value || !['À voir', 'Vu', 'Retenu', 'Refusé'].includes(etatSelect.value)) {
+            etatSelect.value = 'À voir';
+        }
+    }
+}
+
+// ===== FILTRES ÉTAT DYNAMIQUES =====
+function updateEtatFilters() {
+    const etatFilterContainer = document.getElementById('etatFilter');
+    
+    if (currentMode === 'location') {
+        // Mode location: nouveaux états avec indicateurs CSS au lieu d'emojis
+        const locationStates = [
+            { value: 'Nouveau', label: 'Nouveau', class: 'status-nouveau' },
+            { value: 'Contacté', label: 'Contacté', class: 'status-contacte' },
+            { value: 'En attente de rappel', label: 'En attente', class: 'status-attente' },
+            { value: 'Rendez-vous visite', label: 'Visite', class: 'status-visite' },
+            { value: 'Il faut appeler', label: 'À appeler', class: 'status-appeler' },
+            { value: 'Refusé', label: 'Refusé', class: 'status-refuse' }
+        ];
+        
+        // Utiliser DOM API pour éviter innerHTML avec interpolation
+        etatFilterContainer.innerHTML = '';
+        locationStates.forEach(state => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = state.value;
+            checkbox.addEventListener('change', applyFilters);
+            
+            const indicator = document.createElement('span');
+            indicator.className = state.class;
+            indicator.textContent = '● ';
+            indicator.style.fontSize = '0.8rem';
+            
+            label.appendChild(checkbox);
+            label.appendChild(indicator);
+            label.appendChild(document.createTextNode(state.label));
+            etatFilterContainer.appendChild(label);
+        });
+    } else {
+        // Mode achat: anciens états
+        const achatStates = [
+            { value: 'À voir', label: 'À voir' },
+            { value: 'Vu', label: 'Vu' },
+            { value: 'Retenu', label: 'Retenu' },
+            { value: 'Refusé', label: 'Refusé' }
+        ];
+        
+        etatFilterContainer.innerHTML = '';
+        achatStates.forEach(state => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = state.value;
+            checkbox.addEventListener('change', applyFilters);
+            
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(' ' + state.label));
+            etatFilterContainer.appendChild(label);
+        });
+    }
 }
 
 // ===== EVENEMENTS =====
@@ -183,6 +280,15 @@ function initEventListeners() {
     const btnAnnuelles = document.getElementById('chargesAnnuelles');
     if (btnMensuelles) btnMensuelles.addEventListener('click', () => toggleChargesMode('mensuelles'));
     if (btnAnnuelles) btnAnnuelles.addEventListener('click', () => toggleChargesMode('annuelles'));
+
+    // Tri par colonnes - cliquer sur les en-têtes
+    document.querySelectorAll('th.sortable').forEach(th => {
+        th.style.cursor = 'pointer';
+        th.addEventListener('click', () => {
+            const column = th.getAttribute('data-sort');
+            sortTable(column);
+        });
+    });
 
     // Fermer modal en cliquant à l'extérieur
     window.addEventListener('click', (e) => {
@@ -232,7 +338,107 @@ function populateQuartierFilter() {
     });
 }
 
+// ===== TRI PAR COLONNES =====
+function sortTable(column) {
+    // Si on clique sur la même colonne, on alterne la direction
+    if (sortColumn === column) {
+        if (sortDirection === 'asc') {
+            sortDirection = 'desc';
+        } else if (sortDirection === 'desc') {
+            // Reset: on enlève le tri
+            sortColumn = null;
+            sortDirection = 'asc';
+            applyFilters(); // Recharger sans tri
+            updateSortIcons();
+            return;
+        }
+    } else {
+        // Nouvelle colonne: tri ascendant par défaut
+        sortColumn = column;
+        sortDirection = 'asc';
+    }
+    
+    // Appliquer le tri
+    applyFilters();
+    updateSortIcons();
+}
+
+function updateSortIcons() {
+    // Réinitialiser toutes les icônes de tri
+    document.querySelectorAll('.sort-icon').forEach(icon => {
+        icon.textContent = '';
+    });
+    
+    // Afficher l'icône pour la colonne triée
+    if (sortColumn) {
+        const th = document.querySelector(`th[data-sort="${sortColumn}"]`);
+        if (th) {
+            const icon = th.querySelector('.sort-icon');
+            if (icon) {
+                icon.textContent = sortDirection === 'asc' ? ' ↑' : ' ↓';
+            }
+        }
+    }
+}
+
+function applySort(data) {
+    if (!sortColumn) {
+        return data;
+    }
+    
+    return [...data].sort((a, b) => {
+        let aVal, bVal;
+        
+        switch (sortColumn) {
+            case 'loyer':
+            case 'prix':
+                aVal = currentMode === 'location' ? (a.loyer || 0) : (a.prix || 0);
+                bVal = currentMode === 'location' ? (b.loyer || 0) : (b.prix || 0);
+                break;
+            case 'surface':
+                aVal = a.surface || 0;
+                bVal = b.surface || 0;
+                break;
+            case 'prixM2':
+                const prixA = currentMode === 'location' ? (a.loyer || 0) : (a.prix || 0);
+                const prixB = currentMode === 'location' ? (b.loyer || 0) : (b.prix || 0);
+                aVal = a.surface ? Math.round(prixA / a.surface) : 0;
+                bVal = b.surface ? Math.round(prixB / b.surface) : 0;
+                break;
+            case 'charges':
+                aVal = displayChargesMode === 'mensuelles' ? (a.charges || 0) : (a.charges_annuelles || (a.charges || 0) * 12);
+                bVal = displayChargesMode === 'mensuelles' ? (b.charges || 0) : (b.charges_annuelles || (b.charges || 0) * 12);
+                break;
+            case 'quartier':
+                aVal = (a.quartier || '').toLowerCase();
+                bVal = (b.quartier || '').toLowerCase();
+                break;
+            case 'type':
+                aVal = (a.type || '').toLowerCase();
+                bVal = (b.type || '').toLowerCase();
+                break;
+            case 'dpe':
+                aVal = a.dpe || '';
+                bVal = b.dpe || '';
+                break;
+            default:
+                return 0;
+        }
+        
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+            // Tri alphabétique pour les chaînes
+            return sortDirection === 'asc' 
+                ? aVal.localeCompare(bVal)
+                : bVal.localeCompare(aVal);
+        } else {
+            // Tri numérique
+            return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+    });
+}
+
 function applyFilters() {
+    const isLocation = currentMode === 'location';
     const prixMin = parseFloat(document.getElementById('prixMin').value) || 0;
     const prixMax = parseFloat(document.getElementById('prixMax').value) || Infinity;
     const surfaceMin = parseFloat(document.getElementById('surfaceMin').value) || 0;
@@ -248,7 +454,8 @@ function applyFilters() {
     
     filteredBiens = biens.filter(bien => {
         // Prix
-        if (bien.prix < prixMin || bien.prix > prixMax) return false;
+        const prix = isLocation ? (bien.loyer || 0) : (bien.prix || 0);
+        if (prix < prixMin || prix > prixMax) return false;
         
         // Surface
         if (bien.surface < surfaceMin || bien.surface > surfaceMax) return false;
@@ -267,6 +474,9 @@ function applyFilters() {
         
         return true;
     });
+    
+    // Appliquer le tri
+    filteredBiens = applySort(filteredBiens);
     
     renderTable();
 }
@@ -304,14 +514,16 @@ function renderTable() {
     tbody.innerHTML = filteredBiens.map(bien => {
         // Utiliser 'loyer' ou 'prix' selon le mode
         const prix = isLocation ? (bien.loyer || 0) : (bien.prix || 0);
-        const prixLabel = isLocation ? formatPrice(bien.loyer || 0) : formatPrice(bien.prix || 0);
+        const prixLabel = formatPrice(prix);
         const prixM2 = Math.round(prix / bien.surface);
 
         // Déterminer les charges à afficher (mensuelles ou annuelles)
         let chargesValue = 0;
+        let chargesLabel = '-';
         if (displayChargesMode === 'mensuelles') {
             // Mode mensuelles : utiliser charges mensuelles
             chargesValue = bien.charges || 0;
+            chargesLabel = chargesValue ? `${formatPrice(chargesValue)}/mois` : '-';
         } else {
             // Mode annuelles : utiliser charges_annuelles ou calculer depuis charges
             if (bien.charges_annuelles !== undefined) {
@@ -320,11 +532,15 @@ function renderTable() {
                 // Calculer les charges annuelles depuis les mensuelles (x12)
                 chargesValue = (bien.charges || 0) * 12;
             }
+            chargesLabel = chargesValue ? `${formatPrice(chargesValue)}/an` : '-';
         }
 
         const statusClass = getStatusClass(bien.etat);
         const dpeClass = `badge-dpe-${bien.dpe.toLowerCase()}`;
         const equipmentIcons = getEquipmentIcons(bien);
+
+        // Afficher "Oui" ou "Non" pour meublé (mode location seulement)
+        const meubléLabel = isLocation ? (bien.meublé ? 'Oui' : 'Non') : (bien.meublé ? '🏠' : '');
 
         return `
             <tr>
@@ -332,10 +548,10 @@ function renderTable() {
                 <td>${escapeHtml(bien.type)}</td>
                 <td><strong>${prixLabel}</strong></td>
                 <td>${bien.surface} m²</td>
-                <td>${bien.meublé ? '🏠' : ''}</td>
+                <td>${meubléLabel}</td>
                 <td>${bien.pieces}</td>
                 <td><strong>${prixM2} €/m²</strong></td>
-                <td>${chargesValue ? formatPrice(chargesValue) : '-'}</td>
+                <td>${chargesLabel}</td>
                 <td><span class="badge badge-dpe ${dpeClass}">${bien.dpe}</span></td>
                 <td><span class="badge ${statusClass}">${bien.etat}</span></td>
                 <td><div class="equipment-icons">${equipmentIcons}</div></td>
@@ -349,14 +565,23 @@ function renderTable() {
             </tr>
         `;
     }).join('');
+    
+    // Mettre à jour les icônes de tri
+    updateSortIcons();
 }
 
 function getStatusClass(etat) {
     switch (etat) {
+        case 'Nouveau': return 'badge-status-nouveau';
+        case 'Contacté': return 'badge-status-contacte';
+        case 'En attente de rappel': return 'badge-status-attente';
+        case 'Rendez-vous visite': return 'badge-status-visite';
+        case 'Il faut appeler': return 'badge-status-appeler';
+        case 'Refusé': return 'badge-status-refuse';
+        // Anciens états pour compatibilité
         case 'À voir': return 'badge-status-voir';
         case 'Vu': return 'badge-status-vu';
         case 'Retenu': return 'badge-status-retenu';
-        case 'Refusé': return 'badge-status-refuse';
         default: return '';
     }
 }
@@ -376,19 +601,75 @@ function getEquipmentIcons(bien) {
 
 // ===== STATS =====
 function renderStats() {
-    const stats = {
-        total: biens.length,
-        voir: biens.filter(b => b.etat === 'À voir').length,
-        vu: biens.filter(b => b.etat === 'Vu').length,
-        retenu: biens.filter(b => b.etat === 'Retenu').length,
-        refuse: biens.filter(b => b.etat === 'Refusé').length
-    };
+    // Stats pour le mode location (nouveaux états)
+    if (currentMode === 'location') {
+        const stats = {
+            total: biens.length,
+            nouveau: biens.filter(b => b.etat === 'Nouveau').length,
+            contacte: biens.filter(b => b.etat === 'Contacté').length,
+            attente: biens.filter(b => b.etat === 'En attente de rappel').length,
+            visite: biens.filter(b => b.etat === 'Rendez-vous visite').length,
+            appeler: biens.filter(b => b.etat === 'Il faut appeler').length,
+            refuse: biens.filter(b => b.etat === 'Refusé').length
+        };
+        
+        document.getElementById('totalBiens').textContent = stats.total;
+        
+        // Utiliser DOM API au lieu de innerHTML pour la sécurité
+        updateStatElement('statVoir', 'badge-status-nouveau', 'Nouveau', stats.nouveau);
+        updateStatElement('statVu', 'badge-status-contacte', 'Contacté', stats.contacte);
+        updateStatElement('statRetenu', 'badge-status-attente', 'En attente', stats.attente);
+        updateStatElement('statRefuse', 'badge-status-visite', 'Visite', stats.visite);
+        
+        // Mettre à jour les labels des cartes stats
+        updateStatLabels('Nouveaux', 'Contactés', 'En attente', 'Visites');
+    } else {
+        // Stats pour le mode achat (anciens états)
+        const stats = {
+            total: biens.length,
+            voir: biens.filter(b => b.etat === 'À voir').length,
+            vu: biens.filter(b => b.etat === 'Vu').length,
+            retenu: biens.filter(b => b.etat === 'Retenu').length,
+            refuse: biens.filter(b => b.etat === 'Refusé').length
+        };
+        
+        document.getElementById('totalBiens').textContent = stats.total;
+        document.getElementById('statVoir').textContent = stats.voir;
+        document.getElementById('statVu').textContent = stats.vu;
+        document.getElementById('statRetenu').textContent = stats.retenu;
+        document.getElementById('statRefuse').textContent = stats.refuse;
+        
+        // Restaurer les labels des cartes stats
+        updateStatLabels('À Voir', 'Vus', 'Retenus', 'Refusés');
+    }
+}
+
+// Helper pour mettre à jour un élément de stat avec badge (DOM API sécurisé)
+function updateStatElement(elementId, badgeClass, badgeText, value) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
     
-    document.getElementById('totalBiens').textContent = stats.total;
-    document.getElementById('statVoir').textContent = stats.voir;
-    document.getElementById('statVu').textContent = stats.vu;
-    document.getElementById('statRetenu').textContent = stats.retenu;
-    document.getElementById('statRefuse').textContent = stats.refuse;
+    element.textContent = ''; // Clear
+    
+    const badge = document.createElement('span');
+    badge.className = `badge ${badgeClass}`;
+    badge.textContent = badgeText;
+    
+    element.appendChild(badge);
+    element.appendChild(document.createTextNode(`: ${value}`));
+}
+
+// Helper pour mettre à jour les labels des cartes stats
+function updateStatLabels(label1, label2, label3, label4) {
+    const voirLabel = document.querySelector('.stat-card:nth-child(2) .stat-label');
+    const vuLabel = document.querySelector('.stat-card:nth-child(3) .stat-label');
+    const retenuLabel = document.querySelector('.stat-card:nth-child(4) .stat-label');
+    const refuseLabel = document.querySelector('.stat-card:nth-child(5) .stat-label');
+    
+    if (voirLabel) voirLabel.textContent = label1;
+    if (vuLabel) vuLabel.textContent = label2;
+    if (retenuLabel) retenuLabel.textContent = label3;
+    if (refuseLabel) refuseLabel.textContent = label4;
 }
 
 // ===== GRAPHIQUES (Canvas simple) =====
